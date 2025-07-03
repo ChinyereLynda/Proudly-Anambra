@@ -1,13 +1,13 @@
 import { CloseCircle, HamburgerMenu } from "iconsax-reactjs";
 import { useState } from "react";
-// import { NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
 
   const navItems = [
-    { label: "HOME", path: "/home" },
-    { label: "STORE", path: "/more" },
+    { label: "HOME", path: "/" },
+    { label: "STORE", path: "/store" },
     { label: "MORE", path: "/more" },
   ];
 
@@ -15,11 +15,13 @@ export default function Navbar() {
     <nav className="flex items-center justify-between px-16 py-2">
       {/* Logo */}
       <div className="w-40">
-        <img
-          src="/assets/proudly_anambra_logo.png"
-          alt="Logo"
-          className="cursor-pointer"
-        />
+        <NavLink to="/">
+          <img
+            src="/assets/proudly_anambra_logo.png"
+            alt="Logo"
+            className="cursor-pointer"
+          />
+        </NavLink>
       </div>
 
       {/* Desktop Nav*/}
@@ -27,7 +29,7 @@ export default function Navbar() {
         <ul className="flex gap-7 text-sm">
           {navItems.map((item) => (
             <li key={item.label}>
-              {/* <NavLink
+              <NavLink
                 to={item.path}
                 className={({ isActive }) =>
                   `transition duration-300 ${
@@ -36,8 +38,8 @@ export default function Navbar() {
                 }
               >
                 {item.label}
-              </NavLink> */}
-              {item.label}
+              </NavLink>
+              {/* {item.label} */}
             </li>
           ))}
         </ul>
@@ -60,7 +62,7 @@ export default function Navbar() {
           <ul className="flex flex-col gap-4 text-sm">
             {navItems.map((item) => (
               <li key={item.label}>
-                {/* <NavLink
+                <NavLink
                   to={item.path}
                   onClick={() => setIsOpen(false)}
                   className={({ isActive }) =>
@@ -70,8 +72,8 @@ export default function Navbar() {
                   }
                 >
                   {item.label}
-                </NavLink> */}
-                {item.label}
+                </NavLink>
+                {/* {item.label} */}
               </li>
             ))}
           </ul>

@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -17,4 +21,12 @@ body {
 
 .bg-footer {
   background-color: #3d4144;
+}
+
+.text-secondary {
+  color: #989898;
+}
+
+@theme {
+  --color-primary: #f49e0b;
 }

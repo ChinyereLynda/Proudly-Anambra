@@ -1,57 +1,56 @@
 import { useState } from "react";
 import { ArrowCircleRight2, ArrowCircleLeft2 } from "iconsax-reactjs";
 import WhatsHappeningCard from "../Card/WhatsHappeningCard";
+import { blogPosts } from "../../data/blogPosts";
+import { Link } from "react-router-dom";
 
-const whatsHappening = [
-  {
-    name: "Original Ricce in Anambra",
-    image: "/products/rice.png",
-  },
-  {
-    name: "Water in Anambra state",
-    image: "/products/water.png",
-  },
-  {
-    name: "Water in Anambra state",
-    image: "/products/urwa.png",
-  },
-  {
-    name: "Original Ricce in Anambra",
-    image: "/products/royal.png",
-  },
-  {
-    name: "Water in Anambra state",
-    image: "/products/mojito.png",
-  },
-  {
-    name: "Original tea in Anambra state",
-    image: "/products/tea.png",
-  },
-  {
-    name: "Original Ricce in Anambra",
-    image: "/products/rice.png",
-  },
-  {
-    name: "Water in Anambra state",
-    image: "/products/water.png",
-  },
-  {
-    name: "Water in Anambra state",
-    image: "/products/urwa.png",
-  },
-];
+// const whatsHappening = [
+//   {
+//     name: "Original Ricce in Anambra",
+//     image: "/products/rice.png",
+//   },
+//   {
+//     name: "Water in Anambra state",
+//     image: "/products/water.png",
+//   },
+//   {
+//     name: "Water in Anambra state",
+//     image: "/products/urwa.png",
+//   },
+//   {
+//     name: "Original Ricce in Anambra",
+//     image: "/products/royal.png",
+//   },
+//   {
+//     name: "Water in Anambra state",
+//     image: "/products/mojito.png",
+//   },
+//   {
+//     name: "Original tea in Anambra state",
+//     image: "/products/tea.png",
+//   },
+//   {
+//     name: "Original Ricce in Anambra",
+//     image: "/products/rice.png",
+//   },
+//   {
+//     name: "Water in Anambra state",
+//     image: "/products/water.png",
+//   },
+//   {
+//     name: "Water in Anambra state",
+//     image: "/products/urwa.png",
+//   },
+// ];
 
 export default function WhatsHappening() {
   const itemsPerPage = 6;
   const [currentPage, setCurrentPage] = useState(0);
 
-  const totalPages = Math.ceil(whatsHappening.length / itemsPerPage);
+  const totalPages = Math.ceil(blogPosts.length / itemsPerPage);
 
   const startIndex = currentPage * itemsPerPage;
-  const currentItems = whatsHappening.slice(
-    startIndex,
-    startIndex + itemsPerPage
-  );
+  const currentItems = blogPosts.slice(startIndex, startIndex + itemsPerPage);
 
   const goToNext = () => {
     if (currentPage < totalPages - 1) {
@@ -71,7 +70,11 @@ export default function WhatsHappening() {
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10 items-center justify-center">
           {currentItems.map((happening, index) => (
-            <WhatsHappeningCard key={index} happening={happening} />
+            <Link key={happening.id} to={`/blog/${happening.id}`}>
+              <WhatsHappeningCard happening={happening} />
+            </Link>
+
+            // <WhatsHappeningCard key={index} happening={happening} />
           ))}
         </div>
 

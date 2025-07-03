@@ -1,12 +1,12 @@
 import { ArrowCircleLeft2, ArrowCircleRight2 } from "iconsax-reactjs";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const images = [
   { src: "/assets/banner1.png", alt: "Chocolate bar with cocoa background" },
-  { src: "/assets/banner2.png", alt: "Proudly brand hoodie model" },
-  { src: "/assets/banner3.png", alt: "Original rice in Anambra packaging" },
-  { src: "/assets/banner4.png", alt: "Bottled water with Anambra label" },
-  { src: "/assets/banner5.png", alt: "Assorted snacks display" },
+  { src: "/products/mojito.png", alt: "Mojito" },
+  { src: "/products/royal.png", alt: "Royal" },
+  { src: "/products/tea.png", alt: "label" },
+  { src: "products/urwa.png", alt: "urwa" },
 ];
 
 export default function HeroBanner() {
@@ -21,8 +21,15 @@ export default function HeroBanner() {
     setCurrent(current === total - 1 ? 0 : current + 1);
   };
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % total);
+    }, 4000); // 4 seconds
+
+    return () => clearInterval(interval); // cleanup
+  }, [total]);
+
   return (
-    
     <div className="relative">
       <img
         src={images[current].src}

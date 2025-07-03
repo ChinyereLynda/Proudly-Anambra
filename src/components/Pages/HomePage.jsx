@@ -1,9 +1,6 @@
 import HeroBanner from "../HeroBanner";
-import Navbar from "../Navigation/Navbar";
 import Featured from "../Featured";
 import WhatsHappening from "../WhatsHappening";
-import AppDownload from "../AppDownload";
-import Footer from "../Footer";
 
 export default function HomePage() {
   return (
@@ -11,7 +8,6 @@ export default function HomePage() {
       <HeroBanner />
       <Featured />
       <WhatsHappening />
-      <AppDownload />
     </div>
   );
 }
