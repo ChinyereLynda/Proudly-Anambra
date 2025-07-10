@@ -1,51 +1,39 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowCircleRight2, ArrowCircleLeft2 } from "iconsax-reactjs";
 import WhatsHappeningCard from "../Card/WhatsHappeningCard";
-import { blogPosts } from "../../data/blogPosts";
+// import { blogPosts } from "../../data/blogPosts";
 import { Link } from "react-router-dom";
 
-// const whatsHappening = [
-//   {
-//     name: "Original Ricce in Anambra",
-//     image: "/products/rice.png",
-//   },
-//   {
-//     name: "Water in Anambra state",
-//     image: "/products/water.png",
-//   },
-//   {
-//     name: "Water in Anambra state",
-//     image: "/products/urwa.png",
-//   },
-//   {
-//     name: "Original Ricce in Anambra",
-//     image: "/products/royal.png",
-//   },
-//   {
-//     name: "Water in Anambra state",
-//     image: "/products/mojito.png",
-//   },
-//   {
-//     name: "Original tea in Anambra state",
-//     image: "/products/tea.png",
-//   },
-//   {
-//     name: "Original Ricce in Anambra",
-//     image: "/products/rice.png",
-//   },
-//   {
-//     name: "Water in Anambra state",
-//     image: "/products/water.png",
-//   },
-//   {
-//     name: "Water in Anambra state",
-//     image: "/products/urwa.png",
-//   },
-// ];
+import { db } from "../../config/firebase";
+import { getDocs, collection } from "firebase/firestore";
+import { slugify } from "../../utils/slugify";
 
 export default function WhatsHappening() {
   const itemsPerPage = 6;
   const [currentPage, setCurrentPage] = useState(0);
+
+  const [blogPosts, setBlogPosts] = useState([]);
+  const blogPostsRef = collection(db, "blog-posts");
+
+  const fetchBlogPosts = async () => {
+    //Read the data
+    try {
+      const data = await getDocs(blogPostsRef);
+      const blogPosts = data.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        slug: doc.data().slug || slugify(doc.data().title),
+      }));
+      //Set the blog posts
+      setBlogPosts(blogPosts);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchBlogPosts();
+  }, []);
 
   const totalPages = Math.ceil(blogPosts.length / itemsPerPage);
 
@@ -67,10 +55,10 @@ export default function WhatsHappening() {
   return (
     <section className="mb-10">
       <h2 className="text-3xl md:text-4xl font-bold mb-12">What's Happening</h2>
-      <div className="max-w-7xl mx-auto">
+      <div className="mx-auto">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10 items-center justify-center">
           {currentItems.map((happening, index) => (
-            <Link key={happening.id} to={`/blog/${happening.id}`}>
+            <Link key={happening.id} to={`/blog/${happening.slug}`}>
               <WhatsHappeningCard happening={happening} />
             </Link>
 

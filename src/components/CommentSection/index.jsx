@@ -1,11 +1,46 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  collection,
+  addDoc,
+  query,
+  where,
+  orderBy,
+  getDocs,
+  serverTimestamp,
+} from "firebase/firestore";
+import { db } from "../../config/firebase";
 
-export default function CommentSection() {
+export default function CommentSection({ postSlug }) {
   const [comments, setComments] = useState([]);
   const [formData, setFormData] = useState({
     name: "",
     message: "",
   });
+
+  const commentsRef = collection(db, "comments");
+
+  const fetchComments = async () => {
+    try {
+      const q = query(
+        commentsRef,
+        where("postSlug", "==", postSlug),
+        orderBy("timestamp", "desc")
+      );
+      const snapshot = await getDocs(q);
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        timestamp: doc.data().timestamp?.toDate().toLocaleString(),
+      }));
+      setComments(data);
+    } catch (err) {
+      console.error("Error fetching comments:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchComments();
+  }, [postSlug]);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -14,20 +49,34 @@ export default function CommentSection() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!formData.name || !formData.message) return;
 
-    const newComment = {
-      id: Date.now(),
-      name: formData.name,
-      message: formData.message,
-      date: new Date().toLocaleString(),
-    };
+    try {
+      await addDoc(commentsRef, {
+        postSlug,
+        name: formData.name,
+        message: formData.message,
+        timestamp: serverTimestamp(),
+      });
 
-    setComments([newComment, ...comments]);
-    setFormData({ name: "", message: "" });
+      setFormData({ name: "", message: "" });
+      fetchComments(); // Refresh comments after submission
+    } catch (error) {
+      console.error("Error adding comment:", error);
+    }
+
+    // const newComment = {
+    //   id: Date.now(),
+    //   name: formData.name,
+    //   message: formData.message,
+    //   date: new Date().toLocaleString(),
+    // };
+
+    // setComments([newComment, ...comments]);
+    // setFormData({ name: "", message: "" });
   };
 
   return (
@@ -81,7 +130,9 @@ export default function CommentSection() {
               <div className="text-sm text-secondary font-semibold">
                 {comment.name}
               </div>
-              <div className="text-xs text-secondary mb-1">{comment.date}</div>
+              <div className="text-xs text-secondary mb-1">
+                {comment.timestamp}
+              </div>
               <p className="text-sm">{comment.message}</p>
             </div>
           ))}

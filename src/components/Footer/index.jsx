@@ -1,6 +1,7 @@
 import { FaFacebook } from "react-icons/fa6";
 import { FaTwitter } from "react-icons/fa6";
 import { FaInstagram } from "react-icons/fa6";
+import CreatePostButton from "../CreatePostButton";
 
 export default function Footer() {
   const footerLinks = [
@@ -68,6 +69,9 @@ export default function Footer() {
                 {social.icon}
               </a>
             ))}
+          </div>
+          <div>
+            <CreatePostButton />
           </div>
         </div>
       </div>

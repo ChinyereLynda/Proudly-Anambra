@@ -1,4 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { auth, db } from "../../config/firebase";
+import { addDoc, collection, query, where, getDocs } from "firebase/firestore";
+
+import { slugify } from "../../utils/slugify";
 
 export default function BlogPostUploader() {
   const [title, setTitle] = useState("");
@@ -9,6 +14,41 @@ export default function BlogPostUploader() {
   const [sections, setSections] = useState([
     { id: 1, paragraphs: [""], hasImage: false },
   ]);
+  const [loading, setLoading] = useState(true);
+
+  const navigate = useNavigate();
+
+  const blogPostsRef = collection(db, "blog-posts");
+
+  useEffect(() => {
+    const checkPermission = async () => {
+      const user = auth.currentUser;
+
+      if (!user) {
+        navigate("/");
+        return;
+      }
+
+      const q = query(
+        collection(db, "blogAdmin"),
+        where("email", "==", user.email),
+        where("canPost", "==", true)
+      );
+
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) {
+        alert("You are not authorized to access this page.");
+        navigate("/");
+      } else {
+        setLoading(false);
+      }
+    };
+
+    checkPermission();
+  }, []);
+
+  if (loading) return <p className="p-6">Checking permission...</p>;
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -60,27 +100,44 @@ export default function BlogPostUploader() {
     );
   };
 
-  const generateId = (title) =>
-    title
-      .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^a-z0-9\-]/g, "");
+  const generateUniqueSlug = async (baseSlug) => {
+    let slug = baseSlug;
+    let counter = 1;
 
-  const handleSubmit = (e) => {
+    while (true) {
+      const q = query(blogPostsRef, where("slug", "==", slug));
+      const snapshot = await getDocs(q);
+      if (snapshot.empty) break;
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+    return slug;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const baseSlug = slugify(title);
+    const uniqueSlug = await generateUniqueSlug(baseSlug);
+
     const postData = {
-      id: generateId(title),
       title,
       author,
       date,
-      name: title,
+      slug: uniqueSlug,
       image: {
         src: previewUrl || "/placeholder.png",
         alt: title,
       },
       sections,
     };
+
+    try {
+      await addDoc(blogPostsRef, postData);
+      fetchBlogPosts(); // Refresh the list after adding
+    } catch (err) {
+      console.error(err);
+    }
 
     console.log("Blog post object:", postData);
 
