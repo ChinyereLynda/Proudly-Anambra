@@ -5,6 +5,7 @@ import HomePage from "./components/Pages/HomePage";
 import BlogPost from "./components/Pages/BlogPost";
 import BlogPostUpload from "./components/Pages/BlogPostUpload";
 import ScrollToTop from "./components/ScrollToTop";
+import EditBlogPost from "./components/EditBlogPost";
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/blogpostupload" element={<BlogPostUpload />} />
+          <Route path="/edit/:slug" element={<EditBlogPost />} />
         </Route>
       </Routes>
     </Router>

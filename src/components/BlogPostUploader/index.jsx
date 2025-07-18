@@ -1,52 +1,58 @@
 import { useEffect, useState } from "react";
+import { auth } from "../../config/firebase";
 import { useNavigate } from "react-router-dom";
-import { auth, db } from "../../config/firebase";
-import { addDoc, collection, query, where, getDocs } from "firebase/firestore";
 
-import { slugify } from "../../utils/slugify";
-
-export default function BlogPostUploader() {
-  const [title, setTitle] = useState("");
-  const [author, setAuthor] = useState("");
-  const [date, setDate] = useState("");
+export default function BlogPostUploader({ existingPost = null, onSubmit }) {
+  const [title, setTitle] = useState(existingPost?.title || "");
+  const [author, setAuthor] = useState(existingPost?.author || "");
+  const [date, setDate] = useState(existingPost?.date || "");
   const [image, setImage] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
-  const [sections, setSections] = useState([
-    { id: 1, paragraphs: [""], hasImage: false },
-  ]);
+  const [previewUrl, setPreviewUrl] = useState(
+    existingPost?.image?.src || null
+  );
+  const [sections, setSections] = useState(
+    existingPost?.sections || [{ id: 1, paragraphs: [""], hasImage: false }]
+  );
   const [loading, setLoading] = useState(true);
 
   const navigate = useNavigate();
 
-  const blogPostsRef = collection(db, "blog-posts");
-
   useEffect(() => {
     const checkPermission = async () => {
-      const user = auth.currentUser;
+      try {
+        const user = auth.currentUser;
+        if (!user) {
+          navigate("/");
+          return;
+        }
 
-      if (!user) {
+        const { collection, query, where, getDocs } = await import(
+          "firebase/firestore"
+        );
+        const db = (await import("../../config/firebase")).db;
+
+        const q = query(
+          collection(db, "blogAdmin"),
+          where("email", "==", user.email),
+          where("canPost", "==", true)
+        );
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) {
+          alert("You are not authorized to access this page.");
+          navigate("/");
+        } else {
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error("Error checking permission:", err);
+        alert("An error occurred while checking permissions.");
         navigate("/");
-        return;
-      }
-
-      const q = query(
-        collection(db, "blogAdmin"),
-        where("email", "==", user.email),
-        where("canPost", "==", true)
-      );
-
-      const snapshot = await getDocs(q);
-
-      if (snapshot.empty) {
-        alert("You are not authorized to access this page.");
-        navigate("/");
-      } else {
-        setLoading(false);
       }
     };
 
     checkPermission();
-  }, []);
+  }, [navigate]);
 
   if (loading) return <p className="p-6">Checking permission...</p>;
 
@@ -100,50 +106,25 @@ export default function BlogPostUploader() {
     );
   };
 
-  const generateUniqueSlug = async (baseSlug) => {
-    let slug = baseSlug;
-    let counter = 1;
-
-    while (true) {
-      const q = query(blogPostsRef, where("slug", "==", slug));
-      const snapshot = await getDocs(q);
-      if (snapshot.empty) break;
-      slug = `${baseSlug}-${counter}`;
-      counter++;
-    }
-    return slug;
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const baseSlug = slugify(title);
-    const uniqueSlug = await generateUniqueSlug(baseSlug);
 
     const postData = {
       title,
       author,
       date,
-      slug: uniqueSlug,
       image: {
         src: previewUrl || "/placeholder.png",
         alt: title,
       },
       sections,
     };
-
     try {
-      await addDoc(blogPostsRef, postData);
-      fetchBlogPosts(); // Refresh the list after adding
+      await onSubmit(postData);
     } catch (err) {
-      console.error(err);
+      console.error("Error submitting post:", err);
+      alert("An error occurred while submitting the post.");
     }
-
-    console.log("Blog post object:", postData);
-
-    // TODO: send to backend or Firebase
-
-    alert("Post data logged in console.");
   };
 
   return (
@@ -151,7 +132,9 @@ export default function BlogPostUploader() {
       onSubmit={handleSubmit}
       className="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow space-y-6"
     >
-      <h2 className="text-2xl font-bold">Create Blog Post</h2>
+      <h2 className="text-2xl font-bold">
+        {existingPost ? "Edit Blog Post" : "Create Blog Post"}
+      </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
@@ -188,7 +171,7 @@ export default function BlogPostUploader() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium">Image</label>
+          <label className="block text-sm font-medium">Main Image</label>
           <input
             type="file"
             accept="image/*"
@@ -254,8 +237,268 @@ export default function BlogPostUploader() {
         type="submit"
         className="w-full py-2 bg-[#f49e0b] text-white font-semibold rounded hover:bg-[#c97d08]"
       >
-        Submit Blog Post
+        {existingPost ? "Update Blog Post" : "Submit Blog Post"}
       </button>
     </form>
   );
 }
+
+// import { useEffect, useState } from "react";
+// import { useNavigate } from "react-router-dom";
+// import { auth, db } from "../../config/firebase";
+// import { addDoc, collection, query, where, getDocs } from "firebase/firestore";
+
+// import { slugify } from "../../utils/slugify";
+
+// export default function BlogPostUploader() {
+//   const [title, setTitle] = useState("");
+//   const [author, setAuthor] = useState("");
+//   const [date, setDate] = useState("");
+//   const [image, setImage] = useState(null);
+//   const [previewUrl, setPreviewUrl] = useState(null);
+//   const [sections, setSections] = useState([
+//     { id: 1, paragraphs: [""], hasImage: false },
+//   ]);
+//   const [loading, setLoading] = useState(true);
+
+//   const navigate = useNavigate();
+
+//   const blogPostsRef = collection(db, "blog-posts");
+
+//   useEffect(() => {
+//     const checkPermission = async () => {
+//       const user = auth.currentUser;
+
+//       if (!user) {
+//         navigate("/");
+//         return;
+//       }
+
+//       const q = query(
+//         collection(db, "blogAdmin"),
+//         where("email", "==", user.email),
+//         where("canPost", "==", true)
+//       );
+
+//       const snapshot = await getDocs(q);
+
+//       if (snapshot.empty) {
+//         alert("You are not authorized to access this page.");
+//         navigate("/");
+//       } else {
+//         setLoading(false);
+//       }
+//     };
+
+//     checkPermission();
+//   }, []);
+
+//   if (loading) return <p className="p-6">Checking permission...</p>;
+
+//   const handleImageChange = (e) => {
+//     const file = e.target.files[0];
+//     if (file) {
+//       setImage(file);
+//       setPreviewUrl(URL.createObjectURL(file));
+//     }
+//   };
+
+//   const handleAddSection = () => {
+//     setSections((prev) => [
+//       ...prev,
+//       { id: prev.length + 1, paragraphs: [""], hasImage: false },
+//     ]);
+//   };
+
+//   const handleParagraphChange = (sectionId, index, value) => {
+//     setSections((prev) =>
+//       prev.map((section) =>
+//         section.id === sectionId
+//           ? {
+//               ...section,
+//               paragraphs: section.paragraphs.map((p, i) =>
+//                 i === index ? value : p
+//               ),
+//             }
+//           : section
+//       )
+//     );
+//   };
+
+//   const handleAddParagraph = (sectionId) => {
+//     setSections((prev) =>
+//       prev.map((section) =>
+//         section.id === sectionId
+//           ? { ...section, paragraphs: [...section.paragraphs, ""] }
+//           : section
+//       )
+//     );
+//   };
+
+//   const toggleHasImage = (sectionId) => {
+//     setSections((prev) =>
+//       prev.map((section) =>
+//         section.id === sectionId
+//           ? { ...section, hasImage: !section.hasImage }
+//           : section
+//       )
+//     );
+//   };
+
+//   const generateUniqueSlug = async (baseSlug) => {
+//     let slug = baseSlug;
+//     let counter = 1;
+
+//     while (true) {
+//       const q = query(blogPostsRef, where("slug", "==", slug));
+//       const snapshot = await getDocs(q);
+//       if (snapshot.empty) break;
+//       slug = `${baseSlug}-${counter}`;
+//       counter++;
+//     }
+//     return slug;
+//   };
+
+//   const handleSubmit = async (e) => {
+//     e.preventDefault();
+
+//     const baseSlug = slugify(title);
+//     const uniqueSlug = await generateUniqueSlug(baseSlug);
+
+//     const postData = {
+//       title,
+//       author,
+//       date,
+//       slug: uniqueSlug,
+//       image: {
+//         src: previewUrl || "/placeholder.png",
+//         alt: title,
+//       },
+//       sections,
+//     };
+
+//     try {
+//       await addDoc(blogPostsRef, postData);
+//       fetchBlogPosts(); // Refresh the list after adding
+//     } catch (err) {
+//       console.error(err);
+//     }
+
+//     console.log("Blog post object:", postData);
+
+//     alert("Post data logged in console.");
+//   };
+
+//   return (
+//     <form
+//       onSubmit={handleSubmit}
+//       className="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow space-y-6"
+//     >
+//       <h2 className="text-2xl font-bold">Create Blog Post</h2>
+
+//       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+//         <div>
+//           <label className="block text-sm font-medium">Title</label>
+//           <input
+//             type="text"
+//             className="w-full mt-1 p-2 border rounded"
+//             value={title}
+//             onChange={(e) => setTitle(e.target.value)}
+//             required
+//           />
+//         </div>
+
+//         <div>
+//           <label className="block text-sm font-medium">Author</label>
+//           <input
+//             type="text"
+//             className="w-full mt-1 p-2 border rounded"
+//             value={author}
+//             onChange={(e) => setAuthor(e.target.value)}
+//             required
+//           />
+//         </div>
+
+//         <div>
+//           <label className="block text-sm font-medium">Date</label>
+//           <input
+//             type="date"
+//             className="w-full mt-1 p-2 border rounded"
+//             value={date}
+//             onChange={(e) => setDate(e.target.value)}
+//             required
+//           />
+//         </div>
+
+//         <div>
+//           <label className="block text-sm font-medium">Image</label>
+//           <input
+//             type="file"
+//             accept="image/*"
+//             className="mt-1 p-2 border rounded"
+//             onChange={handleImageChange}
+//           />
+//           {previewUrl && (
+//             <img
+//               src={previewUrl}
+//               alt="Preview"
+//               className="mt-2 w-32 h-32 object-cover rounded"
+//             />
+//           )}
+//         </div>
+//       </div>
+
+//       <div className="space-y-4">
+//         <h3 className="text-xl font-semibold">Sections</h3>
+//         {sections.map((section, sIdx) => (
+//           <div key={section.id} className="p-4 border rounded space-y-2">
+//             <div className="flex justify-between items-center">
+//               <h4 className="font-semibold">Section {section.id}</h4>
+//               <label className="flex items-center gap-2 text-sm">
+//                 <input
+//                   type="checkbox"
+//                   checked={section.hasImage}
+//                   onChange={() => toggleHasImage(section.id)}
+//                 />
+//                 Has Image
+//               </label>
+//             </div>
+//             {section.paragraphs.map((p, i) => (
+//               <textarea
+//                 key={i}
+//                 className="w-full p-2 border rounded"
+//                 rows={2}
+//                 placeholder={`Paragraph ${i + 1}`}
+//                 value={p}
+//                 onChange={(e) =>
+//                   handleParagraphChange(section.id, i, e.target.value)
+//                 }
+//               />
+//             ))}
+//             <button
+//               type="button"
+//               onClick={() => handleAddParagraph(section.id)}
+//               className="text-sm text-primary hover:underline"
+//             >
+//               + Add Paragraph
+//             </button>
+//           </div>
+//         ))}
+//         <button
+//           type="button"
+//           onClick={handleAddSection}
+//           className="text-primary hover:underline"
+//         >
+//           + Add Section
+//         </button>
+//       </div>
+
+//       <button
+//         type="submit"
+//         className="w-full py-2 bg-[#f49e0b] text-white font-semibold rounded hover:bg-[#c97d08]"
+//       >
+//         Submit Blog Post
+//       </button>
+//     </form>
+//   );
+// }
